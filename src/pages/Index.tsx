@@ -1,9 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useProjectStore } from '@/store/projectStore';
+import { useAuthStore } from '@/store/authStore';
 import { Project, ProjectStatus, statusLabels } from '@/types/project';
 import { ProjectCard } from '@/components/ProjectCard';
 import { ProjectDialog } from '@/components/ProjectDialog';
 import { CreateProjectDialog } from '@/components/CreateProjectDialog';
+import { LoginDialog } from '@/components/LoginDialog';
+import { UserManagement } from '@/components/UserManagement';
 import { StatsCard } from '@/components/StatsCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +18,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   FolderKanban,
   Plus,
   Search,
@@ -22,14 +32,22 @@ import {
   CheckCircle2,
   Clock,
   PauseCircle,
+  User,
+  LogIn,
+  LogOut,
+  Users,
+  Shield,
 } from 'lucide-react';
 
 export default function Index() {
   const projects = useProjectStore((state) => state.projects);
   const getProjectProgress = useProjectStore((state) => state.getProjectProgress);
+  const { currentUser, isAdmin, logout } = useAuthStore();
   
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
+  const [isUserManagementOpen, setIsUserManagementOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'all'>('all');
 
@@ -68,10 +86,46 @@ export default function Index() {
               <p className="text-xs text-muted-foreground">团队协作 · 进度追踪</p>
             </div>
           </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            新建项目
-          </Button>
+          <div className="flex items-center gap-2">
+            {currentUser ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <User className="h-4 w-4 mr-2" />
+                    {currentUser.username}
+                    {isAdmin() && <Shield className="h-3 w-3 ml-1 text-primary" />}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {isAdmin() && (
+                    <>
+                      <DropdownMenuItem onClick={() => setIsUserManagementOpen(true)}>
+                        <Users className="h-4 w-4 mr-2" />
+                        用户管理
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem onClick={logout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    退出登录
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => setIsLoginDialogOpen(true)}>
+                <LogIn className="h-4 w-4 mr-2" />
+                登录
+              </Button>
+            )}
+            
+            {isAdmin() && (
+              <Button onClick={() => setIsCreateDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                新建项目
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -149,7 +203,7 @@ export default function Index() {
                   ? '没有找到匹配的项目'
                   : '点击上方按钮创建第一个项目'}
               </p>
-              {!searchQuery && statusFilter === 'all' && (
+              {!searchQuery && statusFilter === 'all' && isAdmin() && (
                 <Button onClick={() => setIsCreateDialogOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   创建项目
@@ -169,6 +223,14 @@ export default function Index() {
       <CreateProjectDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
+      />
+      <LoginDialog
+        open={isLoginDialogOpen}
+        onOpenChange={setIsLoginDialogOpen}
+      />
+      <UserManagement
+        open={isUserManagementOpen}
+        onOpenChange={setIsUserManagementOpen}
       />
     </div>
   );

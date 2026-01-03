@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 
 interface DocumentListProps {
   documents: Document[];
+  readonly?: boolean;
   onUpload: (file: File) => void;
   onDelete: (docId: string) => void;
 }
@@ -22,7 +23,7 @@ const getFileIcon = (type: string) => {
   return File;
 };
 
-export function DocumentList({ documents, onUpload, onDelete }: DocumentListProps) {
+export function DocumentList({ documents, readonly = false, onUpload, onDelete }: DocumentListProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,15 +59,17 @@ export function DocumentList({ documents, onUpload, onDelete }: DocumentListProp
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-muted-foreground">文档附件</span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-          className="h-7 text-xs"
-        >
-          <Upload className="h-3 w-3 mr-1" />
-          上传
-        </Button>
+        {!readonly && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            className="h-7 text-xs"
+          >
+            <Upload className="h-3 w-3 mr-1" />
+            上传
+          </Button>
+        )}
         <input
           ref={fileInputRef}
           type="file"
@@ -107,14 +110,16 @@ export function DocumentList({ documents, onUpload, onDelete }: DocumentListProp
                   >
                     <Download className="h-3 w-3" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-destructive hover:text-destructive"
-                    onClick={() => onDelete(doc.id)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  {!readonly && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-destructive hover:text-destructive"
+                      onClick={() => onDelete(doc.id)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
               </div>
             );

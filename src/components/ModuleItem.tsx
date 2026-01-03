@@ -16,16 +16,18 @@ import { useState } from 'react';
 
 interface ModuleItemProps {
   module: Module;
+  readonly?: boolean;
   onUpdate: (updates: Partial<Module>) => void;
   onDelete: () => void;
   onUploadDocument: (file: File) => void;
   onDeleteDocument: (docId: string) => void;
 }
 
-export function ModuleItem({ module, onUpdate, onDelete, onUploadDocument, onDeleteDocument }: ModuleItemProps) {
+export function ModuleItem({ module, readonly = false, onUpdate, onDelete, onUploadDocument, onDeleteDocument }: ModuleItemProps) {
   const [expanded, setExpanded] = useState(false);
 
   const handleProgressChange = (value: number[]) => {
+    if (readonly) return;
     const newProgress = value[0];
     let newStatus: ProjectStatus = module.status;
     
@@ -41,6 +43,7 @@ export function ModuleItem({ module, onUpdate, onDelete, onUploadDocument, onDel
   };
 
   const handleStatusChange = (status: ProjectStatus) => {
+    if (readonly) return;
     const updates: Partial<Module> = { status };
     if (status === 'completed') {
       updates.progress = 100;
@@ -71,7 +74,7 @@ export function ModuleItem({ module, onUpdate, onDelete, onUploadDocument, onDel
                 </span>
               )}
             </div>
-            <Select value={module.status} onValueChange={handleStatusChange}>
+            <Select value={module.status} onValueChange={handleStatusChange} disabled={readonly}>
               <SelectTrigger className="w-[120px] h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
@@ -92,6 +95,7 @@ export function ModuleItem({ module, onUpdate, onDelete, onUploadDocument, onDel
               max={100}
               step={5}
               className="flex-1"
+              disabled={readonly}
             />
             <span className="min-w-[3rem] text-right text-sm font-medium text-muted-foreground">
               {module.progress}%
@@ -108,20 +112,23 @@ export function ModuleItem({ module, onUpdate, onDelete, onUploadDocument, onDel
           {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </Button>
         
-        <Button
-          variant="ghost"
-          size="icon"
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-          onClick={onDelete}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {!readonly && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+            onClick={onDelete}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       
       {expanded && (
         <div className="px-4 pb-4 pt-0 ml-9">
           <DocumentList
             documents={module.documents}
+            readonly={readonly}
             onUpload={onUploadDocument}
             onDelete={onDeleteDocument}
           />
