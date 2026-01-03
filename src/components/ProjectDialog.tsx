@@ -31,7 +31,7 @@ interface ProjectDialogProps {
 
 export function ProjectDialog({ project, open, onOpenChange }: ProjectDialogProps) {
   const [newModuleName, setNewModuleName] = useState('');
-  const { updateProject, deleteProject, addModule, updateModule, deleteModule, getProjectProgress } =
+  const { updateProject, deleteProject, addModule, updateModule, deleteModule, addDocument, deleteDocument, getProjectProgress } =
     useProjectStore();
 
   if (!project) return null;
@@ -43,7 +43,7 @@ export function ProjectDialog({ project, open, onOpenChange }: ProjectDialogProp
     addModule(project.id, {
       name: newModuleName.trim(),
       progress: 0,
-      status: 'todo',
+      status: 'todo'
     });
     setNewModuleName('');
   };
@@ -118,6 +118,20 @@ export function ProjectDialog({ project, open, onOpenChange }: ProjectDialogProp
                   module={module}
                   onUpdate={(updates) => updateModule(project.id, module.id, updates)}
                   onDelete={() => deleteModule(project.id, module.id)}
+                  onUploadDocument={(file) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      const base64 = (reader.result as string).split(',')[1];
+                      addDocument(project.id, module.id, {
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        content: base64
+                      });
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  onDeleteDocument={(docId) => deleteDocument(project.id, module.id, docId)}
                 />
               ))}
             </div>

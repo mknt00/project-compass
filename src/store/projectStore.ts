@@ -1,15 +1,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Project, Module, ProjectStatus } from '@/types/project';
+import { Project, Module, ProjectStatus, Document } from '@/types/project';
 
 interface ProjectStore {
   projects: Project[];
   addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
-  addModule: (projectId: string, module: Omit<Module, 'id'>) => void;
+  addModule: (projectId: string, module: Omit<Module, 'id' | 'documents'>) => void;
   updateModule: (projectId: string, moduleId: string, updates: Partial<Module>) => void;
   deleteModule: (projectId: string, moduleId: string) => void;
+  addDocument: (projectId: string, moduleId: string, document: Omit<Document, 'id' | 'uploadedAt'>) => void;
+  deleteDocument: (projectId: string, moduleId: string, documentId: string) => void;
   getProjectProgress: (projectId: string) => number;
 }
 
@@ -26,10 +28,10 @@ const sampleProjects: Project[] = [
     updatedAt: new Date(),
     deadline: new Date('2024-06-30'),
     modules: [
-      { id: generateId(), name: '用户系统', progress: 100, status: 'completed' },
-      { id: generateId(), name: '商品管理', progress: 75, status: 'in-progress' },
-      { id: generateId(), name: '订单系统', progress: 40, status: 'in-progress' },
-      { id: generateId(), name: '支付集成', progress: 0, status: 'todo' },
+      { id: generateId(), name: '用户系统', progress: 100, status: 'completed', documents: [] },
+      { id: generateId(), name: '商品管理', progress: 75, status: 'in-progress', documents: [] },
+      { id: generateId(), name: '订单系统', progress: 40, status: 'in-progress', documents: [] },
+      { id: generateId(), name: '支付集成', progress: 0, status: 'todo', documents: [] },
     ],
   },
   {
@@ -41,10 +43,10 @@ const sampleProjects: Project[] = [
     updatedAt: new Date(),
     deadline: new Date('2024-08-15'),
     modules: [
-      { id: generateId(), name: 'UI/UX 设计', progress: 100, status: 'completed' },
-      { id: generateId(), name: '核心功能开发', progress: 60, status: 'in-progress' },
-      { id: generateId(), name: 'API 对接', progress: 30, status: 'in-progress' },
-      { id: generateId(), name: '测试与上线', progress: 0, status: 'todo' },
+      { id: generateId(), name: 'UI/UX 设计', progress: 100, status: 'completed', documents: [] },
+      { id: generateId(), name: '核心功能开发', progress: 60, status: 'in-progress', documents: [] },
+      { id: generateId(), name: 'API 对接', progress: 30, status: 'in-progress', documents: [] },
+      { id: generateId(), name: '测试与上线', progress: 0, status: 'todo', documents: [] },
     ],
   },
   {
@@ -55,9 +57,9 @@ const sampleProjects: Project[] = [
     createdAt: new Date('2024-03-01'),
     updatedAt: new Date(),
     modules: [
-      { id: generateId(), name: '需求分析', progress: 0, status: 'todo' },
-      { id: generateId(), name: '架构设计', progress: 0, status: 'todo' },
-      { id: generateId(), name: '数据采集', progress: 0, status: 'todo' },
+      { id: generateId(), name: '需求分析', progress: 0, status: 'todo', documents: [] },
+      { id: generateId(), name: '架构设计', progress: 0, status: 'todo', documents: [] },
+      { id: generateId(), name: '数据采集', progress: 0, status: 'todo', documents: [] },
     ],
   },
 ];
@@ -92,11 +94,52 @@ export const useProjectStore = create<ProjectStore>()(
       },
 
       addModule: (projectId, module) => {
-        const newModule: Module = { ...module, id: generateId() };
+        const newModule: Module = { ...module, id: generateId(), documents: [] };
         set((state) => ({
           projects: state.projects.map((p) =>
             p.id === projectId
               ? { ...p, modules: [...p.modules, newModule], updatedAt: new Date() }
+              : p
+          ),
+        }));
+      },
+
+      addDocument: (projectId, moduleId, document) => {
+        const newDocument: Document = { 
+          ...document, 
+          id: generateId(), 
+          uploadedAt: new Date() 
+        };
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId
+              ? {
+                  ...p,
+                  modules: p.modules.map((m) =>
+                    m.id === moduleId
+                      ? { ...m, documents: [...m.documents, newDocument] }
+                      : m
+                  ),
+                  updatedAt: new Date(),
+                }
+              : p
+          ),
+        }));
+      },
+
+      deleteDocument: (projectId, moduleId, documentId) => {
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId
+              ? {
+                  ...p,
+                  modules: p.modules.map((m) =>
+                    m.id === moduleId
+                      ? { ...m, documents: m.documents.filter((d) => d.id !== documentId) }
+                      : m
+                  ),
+                  updatedAt: new Date(),
+                }
               : p
           ),
         }));
