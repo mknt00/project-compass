@@ -1,10 +1,20 @@
 export type ProjectStatus = 'todo' | 'in-progress' | 'completed' | 'on-hold';
 
+export interface Document {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  content: string; // base64 encoded
+  uploadedAt: Date;
+}
+
 export interface Module {
   id: string;
   name: string;
   progress: number; // 0-100
   status: ProjectStatus;
+  documents: Document[];
 }
 
 export interface Project {
